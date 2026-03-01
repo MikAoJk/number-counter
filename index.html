@@ -116,6 +116,232 @@
       letter-spacing: -1px;
     }
 
+    .meta {
+      display: flex;
+      gap: 14px;
+      font-size: 12px;
+      color: var(--muted);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .pill {
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(255,255,255,0.04);
+    }
+
+    .error {
+      margin-top: 10px;
+      color: var(--danger);
+      font-size: 13px;
+      min-height: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Number Counter</h1>
+
+    <div class="row">
+      <div>
+        <label for="target">Count to</label>
+        <input id="target" type="number" min="0" step="1" value="100" />
+      </div>
+
+      <button class="primary" id="startBtn">Start</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+
+    <div class="counter" aria-live="polite">
+      <div class="value" id="value">0</div>
+      <div class="meta">
+        <div class="pill">Target: <span id="targetLabel">100</span></div>
+        <div class="pill">Status: <span id="status">Idle</span></div>
+      </div>
+    </div>
+
+    <div class="error" id="error"></div>
+  </div>
+
+  <script>
+    const targetInput = document.getElementById("target");
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const valueEl = document.getElementById("value");
+    const targetLabel = document.getElementById("targetLabel");
+    const statusEl = document.getElementById("status");
+    const errorEl = document.getElementById("error");
+
+    let rafId = null;
+    let running = false;
+
+    function setStatus(text) {
+      statusEl.textContent = text;
+    }
+
+    function showError(text) {
+      errorEl.textContent = text || "";
+    }
+
+    function clampInt(n) {
+      if (!Number.isFinite(n)) return null;
+      return Math.max(0, Math.floor(n));
+    }
+
+    function stop() {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = null;
+      running = false;
+    }
+
+    // Smooth counter using requestAnimationFrame; duration scales with target.
+    function startCountTo(target) {
+      stop();
+      running = true;
+      showError("");
+
+      const from = 0;
+      const to = target;
+
+      // Duration in ms (cap so huge numbers don't take forever)
+      const duration = Math.min(4000, Math.max(600, to * 15)); // 15ms per step-ish
+      const startTime = performance.now();
+
+      setStatus("Running");
+
+      function tick(now) {
+        const t = Math.min(1, (now - startTime) / duration);
+        const current = Math.round(from + (to - from) * t);
+
+        valueEl.textContent = String(current);
+
+        if (t < 1 && running) {
+          rafId = requestAnimationFrame(tick);
+        } else {
+          valueEl.textContent = String(to);
+          setStatus("Done");
+          running = false;
+          rafId = null;
+        }
+      }
+
+      valueEl.textContent = "0";
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function reset() {
+      stop();
+      valueEl.textContent = "0";
+      setStatus("Idle");
+      showError("");
+    }
+
+    targetInput.addEventListener("input", () => {
+      const val = clampInt(Number(targetInput.value));
+      targetLabel.textContent = val === null ? "—" : String(val);
+    });
+
+    startBtn.addEventListener("click", () => {
+      const target = clampInt(Number(targetInput.value));
+      if (target === null) {
+        showError("Please enter a valid non-negative number.");
+        return;
+      }
+      targetLabel.textContent = String(target);
+      startCountTo(target);
+    });
+
+    resetBtn.addEventListener("click", reset);
+
+    // Initialize label
+    targetLabel.textContent = targetInput.value;
+  </script>
+</body>
+</html>      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.35);
+    }
+
+    h1 {
+      font-size: 18px;
+      margin: 0 0 14px;
+      color: var(--text);
+      font-weight: 650;
+      letter-spacing: .2px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      outline: none;
+    }
+
+    input[type="number"]:focus {
+      border-color: color-mix(in srgb, var(--accent) 70%, white 0%);
+      box-shadow: 0 0 0 4px rgba(91,140,255,.15);
+    }
+
+    button {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      cursor: pointer;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+      font-weight: 600;
+    }
+
+    button:hover { background: rgba(255,255,255,0.1); }
+    button:active { transform: translateY(1px); }
+
+    .primary {
+      background: linear-gradient(135deg, rgba(91,140,255,.95), rgba(49,208,170,.85));
+      border-color: transparent;
+      color: #061018;
+    }
+    .primary:hover { filter: brightness(1.04); }
+
+    .counter {
+      margin-top: 18px;
+      border-radius: 16px;
+      border: 1px dashed rgba(255,255,255,0.16);
+      padding: 18px;
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .value {
+      font-size: 56px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
     .pill {
       border: 1px solid rgba(255,255,255,0.14);
       border-radius: 999px;
